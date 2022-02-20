@@ -1,5 +1,8 @@
 module Base where
 
+import Data.Char
+import Foreign.C.Types
+
 -- Describe the status of each letter in the guess
 data Status =
     Here                         -- Letter in correct place
@@ -24,3 +27,28 @@ prompt Win   = "You got it. Well done!"
 prompt Start = "Guess [any] or quit [q]? "
 prompt Guess = "Ok. Enter your guess:    "
 prompt Quit  = "Bye!"
+
+
+
+-----------------------------------------------------------
+-- No need to read past here ------------------------------
+-----------------------------------------------------------
+
+-- Multi-platform version of `getChar` which has a fix for a GHC bug with Windows cmd/Powershell
+getChar' :: IO Char
+getChar' = do
+#ifdef mingw32_HOST_OS
+      -- Windows has to do things...
+      c <- c_getch
+      let c' = chr . fromEnum $ c
+      putChar c'
+      return c'
+#else
+    -- Linux, Unix, Mac OS X can just use the normal getChar
+    getChar
+#endif
+
+#ifdef mingw32_HOST_OS  
+foreign import ccall unsafe "conio.h getch"
+  c_getch :: IO CInt
+#endif
