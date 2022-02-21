@@ -4,20 +4,31 @@ import Base
 import Helpers
 import GHC.Base (IO(IO))
 import Data.Char
+import Data.Binary.Get (remaining)
 
 -- Part C - receiving guesses
 
-getGuess :: Int -> IO String 
-getGuess 0 = do
+-- Read the guess and output it as a string
+getGuess :: Int -> String -> IO String 
+getGuess 0 _ = do
     putChar '\n'
     return ""
-getGuess count = do
+getGuess count list = do
     input <- getChar'
     putChar ' ' 
     do
-        remaining <- getGuess (count-1)
-        return (toLower input: remaining)
+        case checkGuessChar input list of
+            True -> do
+                        remaining <- getGuess (count-1) list
+                        return (toLower input: remaining)
+            False -> do
+                        putChar '\b'
+                        putChar '\b'
+                        remaining <- getGuess (count) list
+                        return remaining
 
-
+checkGuessChar :: Char -> String -> Bool 
+checkGuessChar c "" = False 
+checkGuessChar c (elem: string) = c==elem || checkGuessChar c string
 
 -- Part D - gameplay
