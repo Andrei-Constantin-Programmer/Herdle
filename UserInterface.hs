@@ -10,10 +10,13 @@ import Data.Binary.Get (remaining)
 
 -- Read the guess and output it as a string
 getGuess :: Int -> String -> IO String 
-getGuess 0 _ = do
+getGuess max list = getGuessMax max max list
+
+getGuessMax :: Int -> Int -> String -> IO String 
+getGuessMax _ 0 _ = do
     putChar '\n'
     return ""
-getGuess count list = do
+getGuessMax max count list = do
     input <- getChar'
     putChar ' ' 
     do
@@ -24,12 +27,18 @@ getGuess count list = do
                     putChar '\b'
                     putChar '\b'
 
-                    remaining <- getGuess (count+1) list
-                    return ('\b': remaining)
+                    if(count<max) then
+                        do
+                            remaining <- getGuessMax max (count+1) list
+                            return ('\b': remaining)
+                    else
+                        do
+                            remaining <- getGuessMax max count list
+                            return remaining 
             _ -> do
                 case checkGuessChar input list of
                     True -> do
-                                remaining <- getGuess (count-1) list
+                                remaining <- getGuessMax max (count-1) list
                                 if(backspaceLast remaining) then
                                     return (removeFirst remaining) 
                                 else
@@ -37,7 +46,7 @@ getGuess count list = do
                     False -> do
                                 putChar '\b'
                                 putChar '\b'
-                                remaining <- getGuess (count) list
+                                remaining <- getGuessMax max (count) list
                                 return remaining
 
 removeFirst :: [a] -> [a]
@@ -45,6 +54,7 @@ removeFirst [] = []
 removeFirst (x:xs) = xs
 
 backspaceLast :: [Char] -> Bool
+backspaceLast (_: []) = False
 backspaceLast ('\b': list) = True
 backspaceLast _ = False
 
