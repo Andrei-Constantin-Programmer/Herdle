@@ -2,6 +2,7 @@ module UserInterface where
 
 import Base
 import Helpers
+import Core
 import GHC.Base (IO(IO))
 import Data.Char
 import Data.Binary.Get (remaining)
@@ -65,3 +66,37 @@ checkGuessChar c (elem: string) = c==elem || checkGuessChar c string
 
 
 -- Part D - gameplay
+loop :: String -> [Char] -> Int -> Int -> IO()
+loop word available maxAttempts attempts =
+    do
+        if(attempts > maxAttempts) then
+            putStrLn (prompt Lose)
+        else
+            do
+                putStrLn ("Attempt " ++ (show attempts))
+                putStr (prompt Start)
+                input <- getChar' 
+                putStrLn ("")
+                case input of 
+                    'q' -> do
+                            putStrLn (prompt Quit)
+                    _ -> do
+                        putStr (prompt Guess)
+                        guess <- getGuess 5 available
+                        putStrLn (leftMargin ++ showStatus (getStatuses (checkGuess guess word)))
+                        if(winningCondition (getStatuses (checkGuess guess word))) then
+                            putStrLn (prompt Win)
+                        else
+                            loop word (updateAvailable available (checkGuess guess word)) maxAttempts (attempts+1)
+
+
+getStatuses :: [(Char, Status)] -> [Status]
+getStatuses [] = []
+getStatuses ((char, status): statuses) = status: getStatuses statuses
+
+winningCondition :: [Status] -> Bool
+winningCondition [] = True 
+winningCondition (status:statuses) = (status==Here) && winningCondition statuses
+
+go :: String -> IO()
+go word = loop (map toLower word) "abcdefghijklmnopqrstuvwxyz" 6 1
